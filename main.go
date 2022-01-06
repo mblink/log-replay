@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"crypto/tls"
@@ -65,7 +66,7 @@ func init() {
 	logChannel = make(chan string)
 }
 
-func mainLoop(rdr reader.LogReader, transport *http.Transport) {
+func mainLoop(entries []*reader.LogEntry, transport *http.Transport) {
 	var nilTime time.Time
 	var lastTime time.Time
 
@@ -74,16 +75,7 @@ func mainLoop(rdr reader.LogReader, transport *http.Transport) {
 		Timeout:   time.Duration(clientTimeout) * time.Millisecond,
 	}
 
-	for {
-		rec, err := rdr.Read()
-
-		if err == io.EOF {
-			log.Println("Reached EOF")
-			break
-		} else {
-			reader.Must(err)
-		}
-
+	for _, rec := range entries {
 		if !skipSleep {
 			if lastTime != nilTime {
 
@@ -208,6 +200,41 @@ func windowLoop() {
 	}
 }
 
+func parseLogEntries(inputScanner *bufio.Scanner) ([]*reader.LogEntry, error) {
+	var r reader.LogReader
+
+	switch inputFileType {
+	case "nginx":
+		r = nginx.NewReader(format)
+	case "haproxy":
+		r = haproxy.NewReader()
+	case "solr":
+		r = solr.NewReader()
+	default:
+		log.Fatalf("Invalid file-type '%s', must be haproxy, nginx, or solr", inputFileType)
+	}
+
+	var entries []*reader.LogEntry
+
+	for inputScanner.Scan() {
+		var entry *reader.LogEntry
+
+		entry, err := r.Read(inputScanner.Text())
+		if err != nil {
+			return entries, err
+		}
+
+		err = inputScanner.Err()
+		if err != nil {
+			return entries, err
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
 func main() {
 	flag.Parse()
 
@@ -249,18 +276,9 @@ func main() {
 		}
 	}
 
-	var reader reader.LogReader
-
-	switch inputFileType {
-	case "nginx":
-		reader = nginx.NewReader(inputReader, format)
-	case "haproxy":
-		reader = haproxy.NewReader(inputReader)
-	case "solr":
-		reader = solr.NewReader(inputReader)
-	default:
-		log.Fatalf("file-type can be either haproxy or nginx, not '%s'", inputFileType)
-	}
+	inputScanner := bufio.NewScanner(inputReader)
+	entries, err := parseLogEntries(inputScanner)
+	reader.Must(err)
 
 	logWg.Add(1)
 	go logLoop()
@@ -272,7 +290,7 @@ func main() {
 		defer close(windowChannel)
 	}
 
-	mainLoop(reader, transport)
+	mainLoop(entries, transport)
 
 	if debug {
 		log.Println("Waiting for all http goroutines to stop")

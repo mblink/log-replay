@@ -17,7 +17,7 @@ type LogEntry struct {
 
 // LogReader provides generic log parser interface
 type LogReader interface {
-	Read() (*LogEntry, error)
+	Read(line string) (*LogEntry, error)
 }
 
 func ParseRequest(requestString string) ([]string, error) {

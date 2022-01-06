@@ -1,9 +1,7 @@
 package solr
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -16,10 +14,7 @@ const (
 )
 
 // SolrReader implements reader.LogReader intefrace
-type SolrReader struct {
-	InputReader  io.Reader
-	InputScanner *bufio.Scanner
-}
+type SolrReader struct {}
 
 func parseSolrTime(timeLocal string) time.Time {
 	t, err := time.Parse(solrProxyTsLayout, timeLocal)
@@ -68,32 +63,14 @@ func parseSolrInto(s string, entry *reader.LogEntry) error {
 	return nil
 }
 
-// NewReader creates new reader for a solr log format using provided io.Reader
-func NewReader(inputReader io.Reader) reader.LogReader {
+// NewReader creates new reader for a solr log format
+func NewReader() reader.LogReader {
 	var reader SolrReader
-
-	reader.InputReader = inputReader
-	reader.InputScanner = bufio.NewScanner(reader.InputReader)
-
 	return &reader
 }
 
-func (r *SolrReader) Read() (*reader.LogEntry, error) {
+func (r *SolrReader) Read(line string) (*reader.LogEntry, error) {
 	var entry reader.LogEntry
-
-	inputAvailable := r.InputScanner.Scan()
-
-	if inputAvailable {
-		parseSolrInto(r.InputScanner.Text(), &entry)
-	} else {
-		return &entry, io.EOF
-	}
-
-	err := r.InputScanner.Err()
-
-	if err != nil {
-		return &entry, err
-	}
-
+	reader.Must(parseSolrInto(line, &entry))
 	return &entry, nil
 }

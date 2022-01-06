@@ -1,9 +1,7 @@
 package haproxy
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
@@ -15,10 +13,7 @@ const (
 )
 
 // HaproxyReader implements reader.LogReader intefrace
-type HaproxyReader struct {
-	InputReader  io.Reader
-	InputScanner *bufio.Scanner
-}
+type HaproxyReader struct {}
 
 func parseHaproxyTime(timeLocal string) time.Time {
 	t, err := time.Parse(haProxyTsLayout, timeLocal)
@@ -59,32 +54,14 @@ func parseStringInto(s string, entry *reader.LogEntry) error {
 	return nil
 }
 
-// NewReader creates new reader for a haproxy log format using provided io.Reader
-func NewReader(inputReader io.Reader) reader.LogReader {
+// NewReader creates new reader for a haproxy log format
+func NewReader() reader.LogReader {
 	var reader HaproxyReader
-
-	reader.InputReader = inputReader
-	reader.InputScanner = bufio.NewScanner(reader.InputReader)
-
 	return &reader
 }
 
-func (r *HaproxyReader) Read() (*reader.LogEntry, error) {
+func (r *HaproxyReader) Read(line string) (*reader.LogEntry, error) {
 	var entry reader.LogEntry
-
-	inputAvailable := r.InputScanner.Scan()
-
-	if inputAvailable {
-		parseStringInto(r.InputScanner.Text(), &entry)
-	} else {
-		return &entry, io.EOF
-	}
-
-	err := r.InputScanner.Err()
-
-	if err != nil {
-		return &entry, err
-	}
-
+	reader.Must(parseStringInto(line, &entry))
 	return &entry, nil
 }

@@ -45,6 +45,7 @@ var errorRate float64
 var sslSkipVerify bool
 var basicAuthUser string
 var basicAuthPassword string
+var cookie string
 
 func init() {
 	flag.StringVar(&format, "format", `$remote_addr [$time_local] "$request" $status $request_length $body_bytes_sent $request_time "$t_size" $read_time $gen_time`, "Nginx log format")
@@ -62,6 +63,7 @@ func init() {
 	flag.BoolVar(&sslSkipVerify, "ssl-skip-verify", false, "Should HTTP client ignore ssl errors")
 	flag.StringVar(&basicAuthUser, "user-name", "", "Basic auth username")
 	flag.StringVar(&basicAuthPassword, "password", "", "Basic auth password")
+	flag.StringVar(&cookie, "cookie", "", "HTTP cookie")
 
 	logChannel = make(chan string)
 }
@@ -142,6 +144,10 @@ func fireHTTPRequest(client *http.Client, method string, url string, payload str
 		req.Header.Set("User-Agent", userAgent)
 	} else {
 		req.Header.Set("User-Agent", "Log Replay (github.com/Gonzih/log-replay)")
+	}
+
+	if len(cookie) > 0 {
+		req.Header.Set("Cookie", cookie)
 	}
 
 	resp, err := client.Do(req)

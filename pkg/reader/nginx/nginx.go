@@ -51,9 +51,15 @@ func (r *NginxReader) Read(line string) (*reader.LogEntry, error) {
 		return &entry, err
 	}
 
+	userAgent, err := rec.Field("http_user_agent")
+	if err != nil {
+		return &entry, err
+	}
+
 	entry.Method = parsedRequest[0]
 	entry.URL = parsedRequest[1]
 	entry.Time = parseNginxTime(msec)
+	entry.UserAgent = userAgent
 
 	return &entry, nil
 }

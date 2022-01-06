@@ -60,6 +60,7 @@ func parseSolrInto(s string, entry *reader.LogEntry) error {
 	entry.URL = path[1]
 	entry.Time = parseSolrTime(dateString)
 	entry.Payload = payload
+	entry.UserAgent = ""
 	return nil
 }
 

@@ -99,11 +99,11 @@ func mainLoop(entries []*reader.LogEntry, transport *http.Transport) {
 		}
 
 		httpWg.Add(1)
-		go fireHTTPRequest(client, rec.Method, rec.URL, rec.Payload)
+		go fireHTTPRequest(client, rec.Method, rec.URL, rec.Payload, rec.UserAgent)
 	}
 }
 
-func fireHTTPRequest(client *http.Client, method string, url string, payload string) {
+func fireHTTPRequest(client *http.Client, method string, url string, payload string, userAgent string) {
 	defer httpWg.Done()
 
 	path := prefix + url
@@ -138,7 +138,11 @@ func fireHTTPRequest(client *http.Client, method string, url string, payload str
 		return
 	}
 
-	req.Header.Set("User-Agent", "Log Replay (github.com/Gonzih/log-replay)")
+	if len(userAgent) > 0 {
+		req.Header.Set("User-Agent", userAgent)
+	} else {
+		req.Header.Set("User-Agent", "Log Replay (github.com/Gonzih/log-replay)")
+	}
 
 	resp, err := client.Do(req)
 

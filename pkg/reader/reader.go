@@ -9,10 +9,11 @@ import (
 
 // LogEntry is single parsed entry from the log file
 type LogEntry struct {
-	Time    time.Time
-	Method  string
-	URL     string
-	Payload string
+	Time      time.Time
+	Method    string
+	URL       string
+	Payload   string
+	UserAgent string
 }
 
 // LogReader provides generic log parser interface

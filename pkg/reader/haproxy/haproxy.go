@@ -50,6 +50,7 @@ func parseStringInto(s string, entry *reader.LogEntry) error {
 	entry.Method = parsedRequest[0]
 	entry.URL = parsedRequest[1]
 	entry.Time = parseHaproxyTime(dateString)
+	entry.UserAgent = ""
 
 	return nil
 }

@@ -116,7 +116,7 @@ func fireHTTPRequest(client *http.Client, method string, url string, payload str
 	var windowStatus int8
 
 	startTime := time.Now()
-	startTS := startTime.Unix()
+	startTS := startTime.UnixMilli()
 
 	req, err := http.NewRequest(method, path, bytes.NewBufferString(payload))
 

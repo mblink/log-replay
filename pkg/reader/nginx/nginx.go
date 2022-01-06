@@ -1,14 +1,12 @@
 package nginx
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Gonzih/log-replay/pkg/reader"
 	"github.com/satyrius/gonx"
-)
-
-const (
-	nginxTimeLayout = "2/Jan/2006:15:04:05 -0700"
 )
 
 // NginxReader implements reader.LogReader intefrace
@@ -16,12 +14,11 @@ type NginxReader struct {
 	GonxParser *gonx.Parser
 }
 
-func parseNginxTime(timeLocal string) time.Time {
-	t, err := time.Parse(nginxTimeLayout, timeLocal)
-
+func parseNginxTime(msec string) time.Time {
+	millis, err := strconv.ParseInt(strings.Replace(msec, ".", "", -1), 10, 64)
 	reader.Must(err)
 
-	return t
+	return time.UnixMilli(millis)
 }
 
 // NewReader creates new reader for a haproxy log format using provided io.Reader
@@ -39,7 +36,7 @@ func (r *NginxReader) Read(line string) (*reader.LogEntry, error) {
 		return &entry, err
 	}
 
-	timeLocal, err := rec.Field("time_local")
+	msec, err := rec.Field("msec")
 	if err != nil {
 		return &entry, err
 	}
@@ -56,7 +53,7 @@ func (r *NginxReader) Read(line string) (*reader.LogEntry, error) {
 
 	entry.Method = parsedRequest[0]
 	entry.URL = parsedRequest[1]
-	entry.Time = parseNginxTime(timeLocal)
+	entry.Time = parseNginxTime(msec)
 
 	return &entry, nil
 }

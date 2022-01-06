@@ -152,7 +152,7 @@ func fireHTTPRequest(client *http.Client, method string, url string, payload str
 
 	resp, err := client.Do(req)
 
-	if (err == nil) {
+	if err == nil {
 		_, err = io.Copy(ioutil.Discard, resp.Body)
 		resp.Body.Close()
 	}
@@ -170,7 +170,6 @@ func fireHTTPRequest(client *http.Client, method string, url string, payload str
 		status := resp.StatusCode
 		logMessage = fmt.Sprintf("%d\t%d\t%d\t%s\t%s\n", status, startTS, duration, url, payload)
 	}
-
 
 	if enableWindow {
 		windowChannel <- windowStatus
